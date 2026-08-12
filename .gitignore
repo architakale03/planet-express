@@ -1,0 +1,16 @@
+.env
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.DS_Store
+.mypy_cache/
+.ruff_cache/
+
+# Claude Code dev tooling — local only
+.claude/
+feature-list.json
+claude-progress.md
+docs/
+scripts/verify-features.py

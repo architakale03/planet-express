@@ -1,0 +1,64 @@
+# The only compose file: db + api. `docker compose up -d --build` starts both;
+# `make up` is a shortcut for exactly that.
+#
+# .env sits beside this file, so Compose reads it automatically — customised
+# values apply with no --env-file flag. Every ${VAR} below also carries a default
+# matching .env.example, so the stack still comes up on a fresh clone where .env
+# (gitignored) is absent.
+
+# Pinned so the network, volume, and image names do not depend on what the
+# containing directory happens to be called — renaming or cloning the repo
+# elsewhere keeps producing planet-express_* resources.
+name: planet-express
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: planet-express-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-planet_express}
+    ports:
+      # Exposed so you can attach a GUI (TablePlus/DBeaver/psql) during the live session.
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # `api` waits on this, so it never races the database on a cold start.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-planet_express}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  api:
+    build:
+      context: ./api
+    container_name: planet-express-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Set here rather than taken from .env: that file holds the *host* URL
+      # (localhost:5432) for `make dev`, and inside the network the database is
+      # `db`. Real environment variables outrank any env file the app might find,
+      # so this wins where it needs to.
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-planet_express}
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      # host:container. Only the host side moved to 8080 — uvicorn still listens
+      # on 8000 inside the container, so the Dockerfile and healthcheck stand.
+      - "${API_PORT:-8080}:8000"
+    volumes:
+      # Bind mount + uvicorn --reload: edit on the host, the container picks it up.
+      - ./api:/app
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+volumes:
+  pgdata:

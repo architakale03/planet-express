@@ -1,0 +1,32 @@
+[project]
+name = "planet-express-api"
+version = "0.1.0"
+description = "FastAPI + PostgreSQL service"
+requires-python = ">=3.12"
+
+dependencies = [
+    "fastapi==0.115.6",
+    "uvicorn[standard]==0.34.0",
+    "sqlalchemy==2.0.36",
+    "psycopg[binary]==3.2.3",
+    "alembic==1.14.0",
+    "pydantic==2.10.4",
+    "pydantic-settings==2.7.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==8.3.4",
+    "httpx==0.28.1",
+]
+
+# `app` is imported directly from this directory (uvicorn/alembic/pytest all run
+# with api/ as cwd), so there is nothing to build or install.
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# tests/ has no __init__.py, so pytest would otherwise put tests/ on sys.path
+# instead of this directory, and `from app.main import app` would not resolve.
+pythonpath = ["."]
