@@ -20,12 +20,22 @@ that directory. Do not restate them here.
 | Path | What |
 | --- | --- |
 | `feature-list.json` | Scope. Sessions work a feature from here |
+| `docs/plans/` | Approved plans, one file per plan |
 | `claude-progress.md` | Rolling handoff. Overwritten each session |
 | `docs/sessions/` | One immutable file per session |
 | `docs/decisions.md` | Append-only *why*. Supersede entries, never edit |
 | `docs/references/` | Pinned upstream `llms.txt` snapshots — currently empty |
 | `.claude/skills/add-migration/` | Schema-change procedure — use instead of improvising alembic |
 | `.claude/commands/verify-stack.md` | `/verify-stack` |
+
+## Planning
+
+1. Once a plan is approved, write it to `docs/plans/YYYY-MM-DD-<slug>.md`. The approved
+   plan is a file on disk, not just conversation history.
+2. Then break that plan down into features and update `feature-list.json` — one entry per
+   feature, `status: todo`.
+3. Do not start implementing every feature at once. Work one feature at a time, carrying
+   it all the way to `done` before picking up the next.
 
 ## Working a feature
 
