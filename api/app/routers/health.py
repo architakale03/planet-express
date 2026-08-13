@@ -30,9 +30,6 @@ def health_db(db: Session = Depends(get_db)) -> DbHealthResponse:
         version = db.execute(text("SHOW server_version")).scalar_one()
         database = db.execute(text("SELECT current_database()")).scalar_one()
     except SQLAlchemyError:
-        # logger.exception writes the traceback too, so the compose logs say why
-        # Postgres was unreachable, not just that it was. 503 rather than a bare
-        # 500: the app is up, its dependency is not.
         logger.exception("health/db: could not query Postgres")
         raise HTTPException(status_code=503, detail="database unreachable") from None
     return DbHealthResponse(
