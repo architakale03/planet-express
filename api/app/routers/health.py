@@ -1,10 +1,15 @@
-from fastapi import APIRouter, Depends
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.db import get_db
 from app.schemas import DbHealthResponse, HealthResponse
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["health"])
 
@@ -21,8 +26,15 @@ def health_db(db: Session = Depends(get_db)) -> DbHealthResponse:
 
     This is the endpoint to hit when demonstrating that the connection works.
     """
-    version = db.execute(text("SHOW server_version")).scalar_one()
-    database = db.execute(text("SELECT current_database()")).scalar_one()
+    try:
+        version = db.execute(text("SHOW server_version")).scalar_one()
+        database = db.execute(text("SELECT current_database()")).scalar_one()
+    except SQLAlchemyError:
+        # logger.exception writes the traceback too, so the compose logs say why
+        # Postgres was unreachable, not just that it was. 503 rather than a bare
+        # 500: the app is up, its dependency is not.
+        logger.exception("health/db: could not query Postgres")
+        raise HTTPException(status_code=503, detail="database unreachable") from None
     return DbHealthResponse(
         status="ok",
         postgres_version=str(version),
