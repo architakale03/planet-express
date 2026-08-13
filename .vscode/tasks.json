@@ -1,0 +1,22 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      // Only one path can own 8080 and 5432 at a time, so this stops the api
+      // container (the host debugger takes 8080) while leaving db running on
+      // 5432 — that is the database config.py's default DATABASE_URL points at.
+      // Then it applies migrations, which the api container's start command
+      // would normally have done.
+      "label": "db: up + migrate",
+      "type": "shell",
+      "command": "docker compose up -d db && docker compose stop api 2>/dev/null; make local-migrate",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "clear": true
+      }
+    }
+  ]
+}

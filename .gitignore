@@ -8,6 +8,15 @@ venv/
 .mypy_cache/
 .ruff_cache/
 
+# Editor config: the shared, repo-specific ones are tracked (they encode the
+# api/ cwd requirement and the 8080/5432 ownership rule). Anything else an
+# extension drops in here is local noise.
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+
 # Claude Code dev tooling — local only
 .claude/
 feature-list.json

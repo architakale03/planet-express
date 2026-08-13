@@ -1,0 +1,58 @@
+{
+  // Debugging runs the API *host-native* (the `make dev` path), not in the
+  // container — breakpoints need the debugger in the same process as uvicorn.
+  // Postgres still comes from Docker; the preLaunchTask starts just that service.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "API: debug (host)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      // cwd is api/, like every other entrypoint in this repo. From the root
+      // you get ModuleNotFoundError: app, and config.py's "../.env" would miss.
+      "cwd": "${workspaceFolder}/api",
+      "args": [
+        "app.main:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8080"
+        // Deliberately no --reload: the reloader runs uvicorn in a child
+        // process, and breakpoints set in the parent never bind there.
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "preLaunchTask": "db: up + migrate",
+      // Opens Swagger UI once uvicorn reports it is listening, so you can fire
+      // requests at an endpoint and hit your breakpoint from the browser.
+      "serverReadyAction": {
+        "pattern": "Uvicorn running on (https?://\\S+)",
+        "uriFormat": "%s/docs",
+        "action": "openExternally"
+      }
+    },
+    {
+      "name": "pytest: debug current file",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "cwd": "${workspaceFolder}/api",
+      "args": ["${file}", "-v"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "preLaunchTask": "db: up + migrate"
+    },
+    {
+      "name": "pytest: debug all",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "cwd": "${workspaceFolder}/api",
+      "args": ["-v"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "preLaunchTask": "db: up + migrate"
+    }
+  ]
+}
